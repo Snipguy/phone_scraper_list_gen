@@ -160,7 +160,8 @@ def check_internet_connection():
     try:
         urllib.request.urlopen('https://www.google.com/', timeout=5)
         return True
-    except:
+    except Exception as e:
+        print(f"Connection problem --> pinging google had an unknown exception, code error : {e}")
         return False
 
 def wait_for_connection(max_retries=10, retry_delay=10):
