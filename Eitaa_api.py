@@ -1,14 +1,14 @@
 from io import BytesIO
 from time import sleep, time
-from selenium import webdriver # type: ignore
-from selenium.webdriver.common.by import By # type: ignore
-from selenium.common.exceptions import NoSuchElementException, TimeoutException # type: ignore
-from selenium.webdriver.support.ui import WebDriverWait # type: ignore
-from selenium.webdriver.common.action_chains import ActionChains # type: ignore
-from selenium.webdriver.common.keys import Keys # type: ignore
-from selenium.webdriver.common.keys import Keys # type: ignore
-from persiantools.jdatetime import JalaliDate # type: ignore
-import base64, logging # type: ignore
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.keys import Keys
+from persiantools.jdatetime import JalaliDate
+import base64, logging
 from Eitaa_login import login
 import os
 
@@ -28,7 +28,7 @@ logging.basicConfig(level=logging.ERROR,
 logging.basicConfig(level=logging.DEBUG)
 
 def verifyLogin(driver):
-    # I made the chat sidebar of the Eitaa WebAPP as my identifier if the user is logged in, your welcom to change it to whatever you want
+    # I made the chat sidebar of the Eitaa WebAPP as my identifier if the user is logged in, your welcome to change it to whatever you want
     try:
         check_sidebar_exist = WebDriverWait(driver, 10).until(
             lambda d: d.find_element(By.XPATH, '//*[@id="chatlist-container"]/div[2]/div[1]')
@@ -107,7 +107,7 @@ def find_clear_message_box(driver):
         logging.error(f"Timeout occurred in login(): {e}")
         return 1
     except Exception as e:
-        logging.error(f"An unexpected error occured in find_clear_message_box(): {e}")
+        logging.error(f"An unexpected error occurred in find_clear_message_box(): {e}")
         return 1
 
 
@@ -139,7 +139,7 @@ def passing_file_fields(driver):
         logging.error(f"Timeout occurred in login(): {e}")
         return 1
     except NoSuchElementException as e:
-        logging.exception(f"Element not found in passing_file_filds(): {e}")
+        logging.exception(f"Element not found in passing_file_fields(): {e}")
         return 1
     except Exception as e:
         logging.exception(f"An unexpected error occurred in passing_file_fields(): {e}")
