@@ -53,12 +53,13 @@ def verifyLogin(driver):
 def target_user(driver):
     # data-peer-id is a CSS selector that is specific to each user find it using inspect in any browser and replace the number
     unread_message = False
+    unread_message_detector = False
     try:
         user_element = WebDriverWait(driver, 15).until(
-            lambda d: d.find_element(By.CSS_SELECTOR ,'[data-peer-id="1231229"]') # majid meshkin data peer id 1231229
-        ) # 19755659
+            lambda d: d.find_element(By.CSS_SELECTOR ,'[data-peer-id="19771465"]') # majid data peer id 1231229 , Babak data peer id 19771465
+        )
         try:
-            user_element.find_element(By.XPATH, "./div[2]/p[2]/div[contains(@class, 'unread') and contains(@class, 'is-visible')]")
+            unread_message_detector = user_element.find_element(By.XPATH, "//*[@id='folders-container']/div[1]/div[1]/ul[2]/li[1]/div[2]/p[2]/div[contains(@class, 'unread') and contains(@class, 'is-visible')]")
             user_name = user_element.find_element(By.CLASS_NAME, "peer-title")
             print(f"You have an unread message from : {user_name}")
             unread_message = True
@@ -66,9 +67,11 @@ def target_user(driver):
         except NoSuchElementException:
             print(f"There is no unread messages from : {user_name}")
         finally:
+            if unread_message_detector:
+                print("You have an unread message")
+                unread_message = True
             user_element.click()
             return unread_message
-
     except TimeoutException as e:
         logging.error(f"Timeout occurred in login(): {e}")
         return 1
@@ -290,6 +293,8 @@ def send_to_Eitaa(prices_pdf):
         options = webdriver.ChromeOptions()
         options.add_argument(r"user-data-dir=C:\Selenium")
         options.add_argument("profile-directory=Default")
+        options.add_argument("--start-maximized")
+
 
         driver = webdriver.Chrome(options=options)
         driver.get("https://web.eitaa.com")
@@ -307,7 +312,7 @@ def send_to_Eitaa(prices_pdf):
     except Exception as e:
         logging.exception(f"An unexpected error occurred in main(): {e}")
     finally:
-        if unread_message == "True":
+        if unread_message:
             print("\nYou have a new message.")
             input("press any key to Exit the program and close the browser...")
         else:

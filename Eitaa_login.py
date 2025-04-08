@@ -8,15 +8,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException 
 
 
 def login(driver):
-    # options = webdriver.ChromeOptions()
-    # options.add_argument(r"user-data-dir=C:\Selenium")
-    # options.add_argument("profile-directory=Default")
-
-    # driver = webdriver.Chrome(options=options)
-
-    # driver.get('https://web.eitaa.com')
     holder = False
-
     try:
         number_field = WebDriverWait(driver, 20).until(lambda d: d.find_element(By.XPATH, '//*[@id="auth-pages"]/div/div[2]/div[1]/div/div[3]/div[2]/div[1]'))
         user_number = input("Enter your phone number : (No +98 no 0 ,e.g. : 9114445555) :\n")
