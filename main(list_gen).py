@@ -239,14 +239,30 @@ def deny(btn, driver):
         # Switch back to the main content in all cases
         driver.switch_to.default_content()
 
+def save_progress_digi(results_digi, model, price, progress_file_digi):
+    results_digi[model] = {
+        "model": model,
+        "price": price
+    }
+    with open(progress_file_digi, "w") as f:
+        json.dump(results_digi, f, indent=2)
 
-def digi_scrape(driver, digi_scraped):
+def save_progress_techno(results_techno, model, price, progress_file_techno):
+    results_techno[model] = {
+        "model": model,
+        "price": price
+    }
+    with open(progress_file_techno, "w") as f:
+        json.dump(results_techno, f, indent=2)
+
+
+def digi_scrape(driver, digi_scraped, results_digi, progress_file_digi):
     print("Digikala scraping started...")
     for model , url in digi_urls.items():
-        if url in digi_scraped:
-            print(f"{model} skipped...")
+        if model in digi_scraped:
+            print(f"[✓] {model} skipping...")
             continue
-        
+
         out_off_stock = True
         rang = False
 
@@ -254,8 +270,8 @@ def digi_scrape(driver, digi_scraped):
             out_off_stock = True
             d_prices.append("**")
             print('**')
+            save_progress_digi(results_digi, model, "**", progress_file_digi)
             continue
-
 
         if not wait_for_connection(max_retries=10, retry_delay=10):
             print("Could not establish connection. Exiting program.")
@@ -278,6 +294,7 @@ def digi_scrape(driver, digi_scraped):
             else:
                 print(f"{model} **")
                 d_prices.append('**')
+                save_progress_digi(results_digi, model, "**", progress_file_digi)
                 continue
             # checking for the colors available
             try:
@@ -296,7 +313,7 @@ def digi_scrape(driver, digi_scraped):
                 print(model , rang, end=" ")
             else:
                 print(model , end=" ")
-            
+
             try:
                 price_no_discount = driver.find_element(By.CSS_SELECTOR , '[data-testid="price-no-discount"]')
             except NoSuchElementException:
@@ -306,6 +323,7 @@ def digi_scrape(driver, digi_scraped):
                 except NoSuchElementException:
                     d_prices.append("//")
                     print('//')
+                    save_progress_digi(results_digi, model, "//", progress_file_digi)
             else:
                 if "line-trough" in price_no_discount.get_attribute('class'):
                     final_price_list = driver.find_elements(By.CSS_SELECTOR , '[data-testid="price-final"]')
@@ -318,14 +336,16 @@ def digi_scrape(driver, digi_scraped):
                 if isinstance(price , str):
                     d_prices.append(price)
                     print(price)
+                    save_progress_digi(results_digi, model, price, progress_file_digi)
                 else:
                     final = digits.convert_to_en(price.text)
                     d_prices.append(final)
                     print(final)
-
+                    save_progress_digi(results_digi, model, final, progress_file_digi)
         except TimeoutException:
-            print(f"Failed to find the title for {model} within the given time.")
+            print(f"[!] Failed to find the title for {model} within the given time.")
             d_prices.append('//')
+            save_progress_digi(results_digi, model, "//", progress_file_digi)
 
         continue
         # d_pbar.update(1)
@@ -335,24 +355,28 @@ def digi_scrape(driver, digi_scraped):
 
 percent = 100 / len(techno_urls)
 
-# loading the page 
-def techno_scrape(driver):
+# loading the page
+def techno_scrape(driver, techno_scraped, results_techno, progress_file_techno):
     print("Techno Life scraping started...")
     for model , url in techno_urls.items():
+        if model in techno_scraped:
+            print(f"[✓] {model} skipping...")
+            continue
         print(model , end="---")
 
         if url == r"Not_Found": 
             out_off_stock = True
             t_prices.append("**")
             print('**')
+            save_progress_techno(results_techno, model, "**", progress_file_techno)
             continue
-    
+
         if not wait_for_connection(max_retries=10, retry_delay=10):
             print("Could not establish connection. Exiting program.")
             return 1
         else:
             if not driver.service.process:
-                print("Driver instance is invalid.")
+                print("[!] Driver instance is invalid.")
                 return
             driver.get(url)
 
@@ -360,7 +384,6 @@ def techno_scrape(driver):
             product_title = WebDriverWait(driver, 20).until(
                     EC.presence_of_element_located((By.ID, "pdp_name"))
                 )
-            
 
             try:
                 out_off_stock = driver.find_element(By.XPATH , '//*[@id="__next"]/div[3]/main/div/div/article[1]/section[2]/div/div[2]/div/div/div/div/div/p[contains (text() , "ناموجود")]')
@@ -369,11 +392,11 @@ def techno_scrape(driver):
             else:
                 t_prices.append("**")
                 print('**')
+                save_progress_techno(results_techno, model, "**", progress_file_techno)
                 continue
 
             out_off_stock = False
             price = "//"
-
 
 
             # checking for the colors available
@@ -386,7 +409,7 @@ def techno_scrape(driver):
                     pass
                 else:
                     try:
-                        dark_blue_btn.click()                    
+                        dark_blue_btn.click()
                     except ElementClickInterceptedException:
                         if deny(dark_blue_btn, driver) == 1:
                             continue
@@ -415,15 +438,15 @@ def techno_scrape(driver):
                 if isinstance(price, str):
                     t_prices.append(price)
                     print(price)
+                    save_progress_techno(results_techno, model, price, progress_file_techno)
                 else:
                     t_prices.append(price.text)
                     print(price.text)
-            
+                    save_progress_techno(results_techno, model, price.txt, progress_file_techno)
         except TimeoutException:
-                print(f"Failed to find the title for {model} within the given time.")
+                print(f"[!] Failed to find the title for {model} within the given time.")
                 t_prices.append('//')
-
-
+                save_progress_techno(results_techno, model, "//", progress_file_techno)
         continue
         # t_pbar.update(1)
     print("Techno Life scraping Finished!")
@@ -508,10 +531,35 @@ def RunTest(t, d):
         print(f"sending file to Eitaa failed with this error : {e}")
         return 1
 
-def main():
+# def load_scraped_data():
+#     if os.path.exists(SCRAPE_FILE):
+#         with open(SCRAPE_FILE, 'r', encoding='utf-8') as f:
+#             return json.load(f)
+#     return {"digi": {}, "techno": {}}
 
+# def save_scraped_data(data):
+#     with open(SCRAPE_FILE, 'w', encoding='utf-8') as f:
+#         json.dump(data, f, ensure_ascii=False, indent=2)
+
+# ✅ Save result to JSON
+
+
+def main():
     progress_file_digi = "progress_digi.json"
     progress_file_techno = "progress_techno.json"
+
+
+
+    if Test_Mode:
+        try:
+            RunTest(t_prices, d_prices)
+        except TimeoutError as e: 
+            print(f"[!] RunTest failed with this TimeOutError : {e}")
+        except Exception as e:
+            print(f"[!] RunTest failed with this error : {e}")
+        finally:
+            return 0
+
 
     if os.path.exists(progress_file_digi):
         with open(progress_file_digi, "r") as f:
@@ -519,53 +567,47 @@ def main():
     else:
         digi_scraped = set()
 
+    results_digi = []
+
+    try:
+        driver = driver_setup()
+        digi_start = time.time()
+        result = digi_scrape(driver, digi_scraped, results_digi, progress_file_digi)
+        digi_end = time.time()
+        print((digi_end - digi_start) / 60)
+        if result == 1:
+            raise SystemExit("[!] Critical Error: digi scraping failed. Exiting the app...")
+    except TimeoutError as e:
+        print(f"[!] Digi scraping failed with this error : {e}")
+        return 1
+    except Exception as e:
+        print(f"[!] Digi scraping failed with this error : {e}")
+        return 1
+    finally:
+        driver.quit()
+
+
     if os.path.exists(progress_file_techno):
         with open(progress_file_techno, "r") as f:
             techno_scraped = set(json.load(f))
     else:
         techno_scraped = set()
 
-    if Test_Mode:
-        try:
-            RunTest(t_prices, d_prices)
-        except TimeoutError as e: 
-            print(f"RunTest failed with this TimeOutError : {e}")
-        except Exception as e:
-            print(f"RunTest failed with this error : {e}")
-        finally:
-            return 0
-
-
-    try:
-        driver = driver_setup()
-        digi_start = time.time()
-        result = digi_scrape(driver, digi_scraped)
-        digi_end = time.time()
-        print((digi_end - digi_start) / 60)
-        if result == 1:
-            raise SystemExit("Critical Error: digi scraping failed. Exiting the app...")
-    except TimeoutError as e:
-        print(f"Digi scraping failed with this error : {e}")
-        return 1
-    except Exception as e:
-        print(f"Digi scraping failed with this error : {e}")
-        return 1
-    finally:
-        driver.quit()
+    results_techno = []
 
     try:
         driver = driver_setup()
         techno_start = time.time()
-        result = techno_scrape(driver, techno_scraped)
+        result = techno_scrape(driver, techno_scraped, results_techno, progress_file_techno)
         techno_end = time.time()
         print((techno_end - techno_start) / 60)
         if result == 1:
-            raise SystemExit("Critical Error: techno scraping failed. Exiting the app...")
+            raise SystemExit("[!] Critical Error: techno scraping failed. Exiting the app...")
     except TimeoutError as e:
-        print(f"techno scraping failed with this error : {e}")
+        print(f"[!] techno scraping failed with this error : {e}")
         return 1
     except Exception as e:
-        print(f"techno scraping failed with this error : {e}")
+        print(f"[!] techno scraping failed with this error : {e}")
         return 1
     finally:
         driver.quit()
@@ -573,23 +615,29 @@ def main():
     try:
         prices_pdf = create_document()
     except TimeoutError as e:
-        print(f"Creating the Document failed with this error : {e}")
+        print(f"[!] Creating the Document failed with this error : {e}")
         return 1
     except Exception as e:
-        print(f"Creating the Document failed with this error : {e}")
+        print(f"[!] Creating the Document failed with this error : {e}")
         return 1
     # m_pbar.update(1)
 
     try:
         send_to_Eitaa(prices_pdf)
     except TimeoutError as e:
-        print("sending file to Eitaa failed with this error : {e}")
+        print("[!] sending file to Eitaa failed with this error : {e}")
         return 1
     except Exception as e:
-        print("sending file to Eitaa failed with this error : {e}")
+        print("[!] sending file to Eitaa failed with this error : {e}")
         return 1
     finally:
         driver.quit()
+
+    os.remove("progress_digi.json")
+    os.remove("progress_techno.json")
+
+
+
 
 if __name__ == "__main__":
     main()
