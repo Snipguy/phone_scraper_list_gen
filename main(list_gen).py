@@ -18,6 +18,7 @@ from datetime import datetime
 from Eitaa_api import send_to_Eitaa
 from phones_urls import digi_urls, techno_urls
 import traceback
+import argparse
 
 # Suppressing unnecessary error messages
 os.environ["GRPC_VERBOSITY"] = "ERROR"
@@ -185,14 +186,16 @@ def save_progress_techno(model, price, results_techno ,results_file_techno="resu
         json.dump(scraped_models, f, ensure_ascii=False, indent=2)
 
 
-def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi):
+def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi, resume=False):
     print("Digikala scraping started...")
     for model , url in digi_urls.items():
-        if model in digi_scraped:
-            d = results_digi[model]
-            d_prices.append(d["price"])
-            print(f"{GREEN}[✓]{RESET} {model} skipping...")
-            continue
+        if resume:
+            if model in digi_scraped:
+                d = results_digi[model]
+                d_prices.append(d["price"])
+                print(f"{GREEN}[✓]{RESET} {model} skipping...")
+                continue
+
 
         out_off_stock = True
         rang = False
@@ -286,14 +289,17 @@ def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_
 percent = 100 / len(techno_urls)
 
 # loading the page
-def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, progress_file_techno):
+def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, progress_file_techno, resume=False):
     print("Techno Life scraping started...")
     for model , url in techno_urls.items():
-        if model in techno_scraped:
-            t = results_techno[model]
-            t_prices.append(t["price"])
-            print(f"{GREEN}[✓]{RESET} {model} skipping...")
-            continue
+        if resume:
+            if model in techno_scraped:
+                t = results_techno[model]
+                t_prices.append(t["price"])
+                print(f"{GREEN}[✓]{RESET} {model} skipping...")
+                continue
+
+
         print(model , end="---")
 
         if url == r"Not_Found": 
@@ -443,18 +449,15 @@ def RunTest(t, d):
 
     try:
         prices_pdf = create_document()
-        print("55555")
     except TimeoutError as e:
         print(f"Creating the Document failed with TimeOutError : {e}")
         return 1
     except Exception as e:
-        print("55556")
         print(f"Creating the Document failed with this error : {e}")
         return 1
 
     try:
         send_to_Eitaa(prices_pdf)
-        print("66666")
     except TimeoutError as e:
         print(f"sending file to Eitaa failed with TimeOutError : {e}")
         return 1
@@ -463,7 +466,7 @@ def RunTest(t, d):
         return 1
 
 
-def main():
+def main(resume=False):
 
     if Test_Mode:
         try:
@@ -475,9 +478,20 @@ def main():
         finally:
             return 0
 
+    if resume:
+        for file in ["progress_digi.json", "results_digi.json", "progress_techno.json", "results_techno.json"]:
+            try:
+                os.remove(file)
+                print(f"{GREEN}[✓]{RESET}{file} removed")
+            except FileNotFoundError:
+                print(f"{RED}[!]{RESET}{file} Not Found")
+                pass
+            except Exception as e:
+                print(f"{RED}[!]{RESET}Failed to remove {file} due to this error: {e}")
+
     progress_file_digi = "progress_digi.json"
     results_file_digi = "results_digi.json"
-    
+
 
     if os.path.exists(progress_file_digi):
         with open(progress_file_digi, "r") as f:
@@ -496,7 +510,7 @@ def main():
     try:
         driver = driver_setup()
         digi_start = time.time()
-        result = digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi)
+        result = digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi, resume)
         digi_end = time.time()
         print((digi_end - digi_start) / 60)
         if result == 1:
@@ -531,7 +545,7 @@ def main():
     try:
         driver = driver_setup()
         techno_start = time.time()
-        result = techno_scrape(driver, techno_scraped, results_techno, results_file_techno ,progress_file_techno)
+        result = techno_scrape(driver, techno_scraped, results_techno, results_file_techno ,progress_file_techno, resume)
         techno_end = time.time()
         print((techno_end - techno_start) / 60)
         if result == 1:
@@ -576,4 +590,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Script to scrape and create documents.")
+
+    # Add the --resume argument
+    parser.add_argument("--resume", action="store_true", help="Enable resume mode")
+
+    args = parser.parse_args()
+    main(resume=args.resume)
