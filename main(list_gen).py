@@ -17,6 +17,7 @@ import urllib.request
 from datetime import datetime
 from Eitaa_api import send_to_Eitaa
 from phones_urls import digi_urls, techno_urls
+import traceback
 
 # Suppressing unnecessary error messages
 os.environ["GRPC_VERBOSITY"] = "ERROR"
@@ -188,7 +189,8 @@ def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_
     print("Digikala scraping started...")
     for model , url in digi_urls.items():
         if model in digi_scraped:
-            
+            d = results_digi[model]
+            d_prices.append(d["price"])
             print(f"{GREEN}[✓]{RESET} {model} skipping...")
             continue
 
@@ -288,6 +290,8 @@ def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, p
     print("Techno Life scraping started...")
     for model , url in techno_urls.items():
         if model in techno_scraped:
+            t = results_techno[model]
+            t_prices.append(t["price"])
             print(f"{GREEN}[✓]{RESET} {model} skipping...")
             continue
         print(model , end="---")
@@ -489,22 +493,23 @@ def main():
         results_digi = json.load(f)
 
 
-    # try:
-    #     driver = driver_setup()
-    #     digi_start = time.time()
-    #     result = digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi)
-    #     digi_end = time.time()
-    #     print((digi_end - digi_start) / 60)
-    #     if result == 1:
-    #         raise SystemExit(f"{RED}[!]{RESET} Critical Error: digi scraping failed. Exiting the app...")
-    # except TimeoutError as e:
-    #     print(f"{RED}[!]{RESET} Digi scraping failed with this error : {e}")
-    #     return 1
-    # except Exception as e:
-    #     print(f"{RED}[!]{RESET} Digi scraping failed with this error : {e}")
-    #     return 1
-    # finally:
-    #     driver.quit()
+    try:
+        driver = driver_setup()
+        digi_start = time.time()
+        result = digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_file_digi)
+        digi_end = time.time()
+        print((digi_end - digi_start) / 60)
+        if result == 1:
+            raise SystemExit(f"{RED}[!]{RESET} Critical Error: digi scraping failed. Exiting the app...")
+    except TimeoutError as e:
+        print(f"{RED}[!]{RESET} Digi scraping failed with Timeout Error")
+        return 1
+    except Exception as e:
+        print(f"{RED}[!]{RESET} Digi scraping failed with this error : {e}")
+        traceback.print_exc()
+        return 1
+    finally:
+        driver.quit()
 
     progress_file_techno = "progress_techno.json"
     results_file_techno = "results_techno.json"
@@ -532,10 +537,11 @@ def main():
         if result == 1:
             raise SystemExit(f"{RED}[!]{RESET} Critical Error: techno scraping failed. Exiting the app...")
     except TimeoutError as e:
-        print(f"{RED}[!]{RESET} techno scraping failed with this error : {e}")
+        print(f"{RED}[!]{RESET} techno scraping failed with Timeout Error")
         return 1
     except Exception as e:
         print(f"{RED}[!]{RESET} techno scraping failed with this error : {e}")
+        traceback.print_exc()
         return 1
     finally:
         driver.quit()
@@ -543,10 +549,11 @@ def main():
     try:
         prices_pdf = create_document()
     except TimeoutError as e:
-        print(f"{RED}[!]{RESET} Creating the Document failed with this error : {e}")
+        print(f"{RED}[!]{RESET} Creating the Document failed with Timeout Error")
         return 1
     except Exception as e:
         print(f"{RED}[!]{RESET} Creating the Document failed with this error : {e}")
+        traceback.print_exc()
         return 1
 
     try:
