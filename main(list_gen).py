@@ -100,7 +100,7 @@ def wait_for_connection(max_retries=10, retry_delay=10):
     while retries < max_retries:
         if check_internet_connection():
             if retries > 0:
-                print("{GREEN}[✓]{RESET}Internet is connected....")
+                print(f"{GREEN}[✓]{RESET}Internet is connected....")
             return True
         else:
             retries += 1
@@ -118,10 +118,6 @@ else:
     phone_models = []
     for key in digi_urls.keys():
         phone_models.append(key)
-    # d_pbar = tqdm(total=urls_len)
-    # t_pbar = tqdm(total=urls_len)
-    # c_pbar = tqdm(total=100)
-    # m_pbar = tqdm(total=3)
 
 def deny(btn, driver):
     try:
@@ -192,6 +188,7 @@ def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_
     print("Digikala scraping started...")
     for model , url in digi_urls.items():
         if model in digi_scraped:
+            
             print(f"{GREEN}[✓]{RESET} {model} skipping...")
             continue
 
@@ -280,7 +277,7 @@ def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_
 
         continue
         # d_pbar.update(1)
-    print("Digikala scraping Finished{GREEN}[✓]{RESET}")
+    print(f"Digikala scraping Finished{GREEN}[✓]{RESET}")
     driver.quit()
 
 
@@ -303,11 +300,11 @@ def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, p
             continue
 
         if not wait_for_connection(max_retries=10, retry_delay=10):
-            print("{RED}[!]{RESET}Could not establish connection. Exiting program.")
+            print(f"{RED}[!]{RESET}Could not establish connection. Exiting program.")
             return 1
         else:
             if not driver.service.process:
-                print("{RED}[!]{RESET} Driver instance is invalid.")
+                print(f"{RED}[!]{RESET} Driver instance is invalid.")
                 return
             driver.get(url)
 
@@ -379,7 +376,7 @@ def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, p
                 t_prices.append('//')
         continue
         # t_pbar.update(1)
-    print("Techno Life scraping Finished{GREEN}[✓]{RESET}")
+    print(f"Techno Life scraping Finished{GREEN}[✓]{RESET}")
     driver.quit()
 
 
@@ -499,7 +496,7 @@ def main():
     #     digi_end = time.time()
     #     print((digi_end - digi_start) / 60)
     #     if result == 1:
-    #         raise SystemExit("{RED}[!]{RESET} Critical Error: digi scraping failed. Exiting the app...")
+    #         raise SystemExit(f"{RED}[!]{RESET} Critical Error: digi scraping failed. Exiting the app...")
     # except TimeoutError as e:
     #     print(f"{RED}[!]{RESET} Digi scraping failed with this error : {e}")
     #     return 1
@@ -533,7 +530,7 @@ def main():
         techno_end = time.time()
         print((techno_end - techno_start) / 60)
         if result == 1:
-            raise SystemExit("{RED}[!]{RESET} Critical Error: techno scraping failed. Exiting the app...")
+            raise SystemExit(f"{RED}[!]{RESET} Critical Error: techno scraping failed. Exiting the app...")
     except TimeoutError as e:
         print(f"{RED}[!]{RESET} techno scraping failed with this error : {e}")
         return 1
@@ -555,16 +552,18 @@ def main():
     try:
         send_to_Eitaa(prices_pdf)
     except TimeoutError as e:
-        print("{RED}[!]{RESET} sending file to Eitaa failed with this error : {e}")
+        print(f"{RED}[!]{RESET} sending file to Eitaa failed with this error : {e}")
         return 1
     except Exception as e:
-        print("{RED}[!]{RESET} sending file to Eitaa failed with this error : {e}")
+        print(f"{RED}[!]{RESET} sending file to Eitaa failed with this error : {e}")
         return 1
     finally:
         driver.quit()
 
-    # os.remove("progress_digi.json")
-    # os.remove("progress_techno.json")
+    os.remove("progress_digi.json")
+    os.remove("results_digi.json")
+    os.remove("progress_techno.json")
+    os.remove("results_techno.json")
 
 
 
