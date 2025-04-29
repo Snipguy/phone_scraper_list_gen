@@ -478,7 +478,7 @@ def main(resume=False):
         finally:
             return 0
 
-    if resume:
+    if not resume:
         for file in ["progress_digi.json", "results_digi.json", "progress_techno.json", "results_techno.json"]:
             try:
                 os.remove(file)
@@ -592,7 +592,7 @@ def main(resume=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script to scrape and create documents.")
 
-    # Add the --resume argument
+    # --resume argument
     parser.add_argument("--resume", action="store_true", help="Enable resume mode")
 
     args = parser.parse_args()
