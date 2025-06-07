@@ -1,0 +1,5 @@
+selenium
+persian-tools
+python-docx
+docx2pdf
+persiantools
