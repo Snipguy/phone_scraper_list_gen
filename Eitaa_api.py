@@ -1,5 +1,5 @@
 from io import BytesIO
-from time import sleep, time
+from time import sleep
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
@@ -15,15 +15,6 @@ import os
 # Set up basic logging configuration
 logging.basicConfig(level=logging.ERROR,
                     format='%(levelname)s: %(message)s')
-
-# Example log messages
-# logging.debug("This is a debug message")     # Won't appear
-# logging.info("This is an info message")      # Won't appear
-# logging.warning("This is a warning")         # Won't appear
-# logging.error("This is an error message")    # Will appear
-# logging.critical("This is critical!")        # Will appear
-
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -148,7 +139,7 @@ def passing_file_fields(driver):
         logging.exception(f"An unexpected error occurred in passing_file_fields(): {e}")
         return 1
 
-def passing_file(driver, prices_pdf):
+# def passing_file(driver, prices_pdf):
     print(f"prices_pdf is of type: {type(prices_pdf)}")
     print(f"prices_pdf value: {prices_pdf}")
 
@@ -182,7 +173,7 @@ def passing_file(driver, prices_pdf):
                 byteNumbers[i] = byteCharacters.charCodeAt(i);
             }}
             let byteArray = new Uint8Array(byteNumbers);
-            let blob = new Blob([byteArray], {{ type: "text/plain" }}); // Change type if needed
+            let blob = new Blob([byteArray], {{ type: "application/pdf" }});
 
             // Create a File object
             let file = new File([blob], "test.txt", {{ type: blob.type }});
@@ -218,6 +209,74 @@ def passing_file(driver, prices_pdf):
     except Exception as e:
         logging.exception(f"An unexpected error occurred in passing_file(): {e}")
         return 1
+
+def passing_file(driver, prices_pdf):
+    print(f"prices_pdf is of type: {type(prices_pdf)}")
+    print(f"prices_pdf value: {prices_pdf}")
+
+    if prices_pdf is None or not os.path.exists(prices_pdf):
+        raise ValueError("Error: prices_pdf is None or does not exist!")
+
+    print("Trying to send the file.....")        
+
+    if isinstance(prices_pdf, BytesIO):
+        file_data = prices_pdf.getvalue()  # Read directly from BytesIO
+        file_name = "prices.pdf"
+        mime_type = "application/pdf"
+    elif isinstance(prices_pdf, str):
+        with open(prices_pdf, "rb") as file:
+            file_data = file.read()
+        file_name = os.path.basename(prices_pdf)
+        mime_type = "application/pdf"
+    else:
+        raise TypeError("prices_pdf must be a file path (str) or a file-like object (BytesIO)")
+
+    base64_file = base64.b64encode(file_data).decode("utf-8")
+
+    print("running javascript for passing the file....")
+    try: 
+        js_script = f"""
+        async function pasteFile() {{
+            let byteCharacters = atob("{base64_file}");
+            let byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {{
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }}
+            let byteArray = new Uint8Array(byteNumbers);
+            let blob = new Blob([byteArray], {{ type: "{mime_type}" }});
+
+            let file = new File([blob], "{file_name}", {{ type: blob.type }});
+
+            let dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+
+            let event = new ClipboardEvent("paste", {{
+                bubbles: true, 
+                cancelable: true,
+                clipboardData: dataTransfer
+            }});
+
+            document.dispatchEvent(event);
+        }}
+
+        pasteFile();
+        """
+        print("JavaScript finished....")
+
+        sleep(0.5)
+
+        print("Executing JavaScript....")
+        driver.execute_script(js_script)
+        print("JavaScript Done!")
+
+        return 0
+    except TimeoutException as e:
+        logging.error(f"Timeout occurred in passing_file(): {e}")
+        return 1
+    except Exception as e:
+        logging.exception(f"An unexpected error occurred in passing_file(): {e}")
+        return 1
+
 
 def check_sending_status(driver):
     # Define a maximum timeout (e.g., 30 minutes)

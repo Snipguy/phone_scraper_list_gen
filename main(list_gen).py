@@ -1,4 +1,3 @@
-from calendar import month
 import logging
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -33,10 +32,12 @@ YELLOW = "\033[33m"
 RESET = "\033[0m"
 
 Test_Mode = False
+debugging_Mode = False
+
 
 def driver_setup():
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
     # chrome_options.add_argument("--window-size=1920,1080")
     chrome_options.add_argument("--disable-popup-blocking")
     chrome_options.add_argument("--start-maximized")
@@ -93,7 +94,8 @@ def check_internet_connection():
         urllib.request.urlopen('https://www.google.com/', timeout=5)
         return True
     except Exception as e:
-        print(f"{YELLOW}[!]{RESET}Connection problem --> pinging google had an unknown exception, code error : {e}")
+        if debugging_Mode:
+            print(f"{YELLOW}[!]{RESET}Connection problem --> pinging google had an unknown exception, code error : {e}")
         return False
 
 def wait_for_connection(max_retries=10, retry_delay=10):
@@ -120,6 +122,12 @@ else:
     phone_models = []
     for key in digi_urls.keys():
         phone_models.append(key)
+
+def deny_btn_digi(driver):
+    try:
+        WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="modal-root"]/div/div/div/div/div[2]/div/div/button[2]/div'))).click()
+    except Exception as e:
+        print(f"deny button for digi failed with : {e}")
 
 def deny(btn, driver):
     try:
@@ -238,8 +246,12 @@ def digi_scrape(driver, digi_scraped, results_digi, results_file_digi, progress_
                     driver.find_element(By.CSS_SELECTOR, "[style='background: rgb(0, 33, 113);']").click()
                 except NoSuchElementException:
                     pass
+                except ElementClickInterceptedException:
+                    deny_btn_digi(driver)
                 else:
                     rang = "Dark Blue"
+            except ElementClickInterceptedException:
+                deny_btn_digi(driver)
             else:
                 rang = "Black"
 
@@ -410,11 +422,19 @@ def create_document():
     hdr_cells[1].text = 'Digikala'
     hdr_cells[2].text = 'Technolife'
 
-    for i in range(urls_len):
-        row_cells = table.add_row().cells
-        row_cells[0].paragraphs[0].add_run(phone_models[i]).bold = True
-        row_cells[1].text = d_prices[i]
-        row_cells[2].text = t_prices[i]
+    if Test_Mode == True:
+        for i in range(urls_len): # should be fixed later
+            row_cells = table.add_row().cells
+            row_cells[0].paragraphs[0].add_run(phone_models[i]).bold = True
+            row_cells[1].text = d_prices[i]
+            row_cells[2].text = t_prices[i]
+    else:
+        for i in range(urls_len):
+            row_cells = table.add_row().cells
+            row_cells[0].paragraphs[0].add_run(phone_models[i]).bold = True
+            row_cells[1].text = d_prices[i]
+            row_cells[2].text = t_prices[i]
+
 
     today_date = str(JalaliDate.today())
     now_time = datetime.now().strftime("%H_%M")
@@ -444,6 +464,8 @@ def create_document():
     return output_file
 
 def RunTest(t, d):
+    t.append("123")
+    d.append("123")
     t.append("123")
     d.append("123")
 
@@ -484,7 +506,7 @@ def main(resume=False):
                 os.remove(file)
                 print(f"{GREEN}[✓]{RESET}{file} removed")
             except FileNotFoundError:
-                print(f"{RED}[!]{RESET}{file} Not Found")
+                print(f"{YELLOW}[!]{RESET}{file} Not Found")
                 pass
             except Exception as e:
                 print(f"{RED}[!]{RESET}Failed to remove {file} due to this error: {e}")
@@ -585,8 +607,6 @@ def main(resume=False):
     os.remove("results_digi.json")
     os.remove("progress_techno.json")
     os.remove("results_techno.json")
-
-
 
 
 if __name__ == "__main__":
