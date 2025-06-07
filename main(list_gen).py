@@ -129,7 +129,7 @@ def deny_btn_digi(driver):
     except Exception as e:
         print(f"deny button for digi failed with : {e}")
 
-def deny(btn, driver):
+def deny_btn_techno(btn, driver):
     try:
         # Wait for the 'deny' button to appear
         deny__btn = WebDriverWait(driver, 10).until(
@@ -168,6 +168,31 @@ def deny(btn, driver):
     finally:
         # Switch back to the main content in all cases
         driver.switch_to.default_content()
+
+# def remove_insurance_techno(driver, model, max_attempts=3):
+#     attempts = 0
+#     while attempts < max_attempts:
+#         try:
+#             delete_insurance_btn = WebDriverWait(driver, 15).until(
+#                 EC.element_to_be_clickable((By.XPATH, '//*[@id="__next"]/div[3]/main/div/div/article[1]/section[2]/div/div[1]/div/div/div[1]/div/div[2]/button/span'))
+#             )
+#             delete_insurance_btn.click()
+#             logger.info(f"-Clicked the delete insurance button successfully for ({model})-")
+#             return True
+#         except TimeoutException:
+#             logger.info(f"-Delete insurance button for ({model}) not clickable within the timeout period-")
+#             return False
+#         except NoSuchElementException:
+#             logger.info(f"-Delete insurance button for ({model}) not found within the timeout period-")
+#             return False
+#         except ElementClickInterceptedException:
+#             logger.info(f"-Click intercepted for delete insurance button on ({model}), attempting to resolve and retry-")
+#             deny_btn_techno()
+#             attempts += 1
+#             time.sleep(1)
+#     logger.info(f"-Failed to click delete insurance button after {max_attempts} attempts for ({model})-")
+#     return False
+
 
 def save_progress_digi(model, price, results_digi ,results_file_digi="results_digi.json", progress_file_digi="progress_digi.json"):
     results_digi[model] = {
@@ -361,7 +386,7 @@ def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, p
                     try:
                         dark_blue_btn.click()
                     except ElementClickInterceptedException:
-                        if deny(dark_blue_btn, driver) == 1:
+                        if deny_btn_techno(dark_blue_btn, driver) == 1:
                             continue
                     finally:
                         rang = "DarkBlue"
@@ -369,16 +394,19 @@ def techno_scrape(driver, techno_scraped, results_techno, results_file_techno, p
                 try:
                     black_btn.click()
                 except ElementClickInterceptedException:
-                    if deny(black_btn, driver) == 1:
+                    if deny_btn_techno(black_btn, driver) == 1:
                         continue
                 finally:
                     rang = "Black"
 
 
+            # remove_insurance_techno(driver, model) # uncomment this and the function itself if ever needed
+
             # finding the price and scraping it
             for x in xpath_for_price_techno:
                 try:
                     price = driver.find_element(By.XPATH , xpath_for_price_techno[x])
+                    print(f"{model} after insurance = {price.text}")
                 except NoSuchElementException:
                     pass
                 else:
